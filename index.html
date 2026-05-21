@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stravinsky Reception History Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --accent-dark: #2980b9;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg: #f5f6fa;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --border: #dcdde1;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ── HEADER ── */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, #1a252f 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        header h1 { font-size: 2rem; margin-bottom: 0.3rem; letter-spacing: 1px; }
+        header p { opacity: 0.8; font-size: 1rem; }
+
+        /* ── NAVIGATION TABS ── */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            background: white;
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .tab-btn {
+            padding: 1rem 1.8rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-light);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover { color: var(--accent); }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* ── MAIN LAYOUT ── */
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+        }
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0.5rem;
+        }
+        .card h3 {
+            font-size: 1.1rem;
+            margin: 1rem 0 0.5rem;
+            color: var(--primary);
+        }
+
+        /* ── FORMS ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
+        }
+        textarea { resize: vertical; min-height: 120px; }
+
+        /* ── BUTTONS ── */
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #219a52; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-warning:hover { background: #e67e22; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-outline {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+        .btn-outline:hover { background: var(--accent); color: white; }
+        .btn-group { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1rem; }
+
+        /* ── TABLE ── */
+        .table-wrapper { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover { background: #f0f4f8; }
+        .polarity-positive { color: var(--success); font-weight: 700; }
+        .polarity-negative { color: var(--danger); font-weight: 700; }
+        .polarity-neutral { color: var(--warning); font-weight: 700; }
+
+        /* ── BADGES ── */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-hostile { background: #fde8e8; color: var(--danger); }
+        .badge-ambivalent { background: #fef3e2; color: var(--warning); }
+        .badge-receptive { background: #e8f8f0; color: var(--success); }
+        .badge-enthusiastic { background: #e3f2fd; color: var(--accent); }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .stat-card .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.3rem;
+        }
+
+        /* ── CHART CONTAINERS ── */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-height: 450px;
+            margin: 1rem 0;
+        }
+
+        /* ── SEARCH / FILTER ── */
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            align-items: flex-end;
+        }
+        .filter-bar .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
+
+        /* ── REPORT ── */
+        .report-output {
+            background: #1e272e;
+            color: #d2dae2;
+            padding: 1.5rem;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+            line-height: 1.7;
+        }
+
+        /* ── VOCABULARY CLUSTERS ── */
+        .cluster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+        .cluster-card {
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        .cluster-card h4 { margin-bottom: 0.5rem; text-transform: capitalize; }
+        .cluster-card .terms { font-size: 0.85rem; color: var(--text-light); }
+        .cluster-hostility { border-left: 4px solid var(--danger); }
+        .cluster-ambivalence { border-left: 4px solid var(--warning); }
+        .cluster-reassessment { border-left: 4px solid var(--success); }
+        .cluster-acceptance { border-left: 4px solid var(--accent); }
+        .cluster-craft_influence { border-left: 4px solid #9b59b6; }
+
+        /* ── CITATION BOX ── */
+        .citation-box {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            position: relative;
+        }
+        .citation-box label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-light);
+            display: block;
+            margin-bottom: 0.4rem;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .copy-btn:hover { background: var(--accent-dark); }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 14px;
+            padding: 2rem;
+            max-width: 720px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h2 { margin-bottom: 1.2rem; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; }
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: var(--text-light);
+            line-height: 1;
+        }
+        .modal-close:hover { color: var(--danger); }
+
+        /* ── TOAST NOTIFICATION ── */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s;
+            z-index: 1000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ── CSV IMPORT AREA ── */
+        .drop-zone {
+            border: 2px dashed var(--accent);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            background: rgba(52,152,219,0.05);
+            border-color: var(--accent-dark);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .tabs { flex-wrap: wrap; }
+            .tab-btn { padding: 0.7rem 1rem; font-size: 0.85rem; }
+            header h1 { font-size: 1.5rem; }
+            .filter-bar { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🎼 Stravinsky Reception History Tool</h1>
+    <p>Computational Analysis of Critical Reception — Late Works (Serial Period)</p>
+</header>
+
+<nav class="tabs">
+    <button class="tab-btn active" onclick="switchTab('add', this)">➕ Add Reviews</button>
+    <button class="tab-btn" onclick="switchTab('browse', this)">📋 Browse Data</button>
+    <button class="tab-btn" onclick="switchTab('analysis', this)">📊 Analysis</button>
+    <button class="tab-btn" onclick="switchTab('visualize', this)">📈 Visualize</button>
+    <button class="tab-btn" onclick="switchTab('report', this)">📝 Report</button>
+    <button class="tab-btn" onclick="switchTab('vocabulary', this)">🔤 Vocabulary</button>
+</nav>
+
+<div class="container">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TAB 1: ADD REVIEWS                         -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="tab-add" class="tab-content active">
+        <div class="card">
+            <h2>Add a Historical Review</h2>
+            <form id="reviewForm" class="form-grid">
+                <div class="form-group full-width">
+                    <label for="reviewText">Review Text *</label>
+                    <textarea id="reviewText" placeholder="Paste the full text of the concert review, critical essay, or recording review here..." rows="6"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="reviewYear">Year *</label>
+                    <input type="number" id="reviewYear" min="1900" max="2030" placeholder="e.g. 1958">
+                </div>
+                <div class="form-group">
+                    <label for="reviewPublication">Publication *</label>
+                    <input type="text" id="reviewPublication" placeholder="e.g. Musical Times, New York Times">
+                </div>
+                <div class="form-group">
+                    <label for="reviewAuthor">Author / Critic *</label>
+                    <input type="text" id="reviewAuthor" placeholder="e.g. Harold Schonberg">
+                </div>
+                <div class="form-group">
+                    <label for="reviewWork">Work Reviewed *</label>
+                    <select id="reviewWork">
+                        <option value="">— Select a work —</option>
+                        <option>Cantata (1952)</option>
+                        <option>Septet (1953)</option>
+                        <option>Three Songs from Shakespeare (1953)</option>
+                        <option>In Memoriam Dylan Thomas (1954)</option>
+                        <option>Canticum Sacrum (1955)</option>
+                        <option>Agon (1957)</option>
+                        <option>Threni (1958)</option>
+                        <option>Movements (1959)</option>
+                        <option>Epitaphium (1959)</option>
+                        <option>Double Canon (1959)</option>
+                        <option>A Sermon, a Narrative and a Prayer (1961)</option>
+                        <option>The Flood (1962)</option>
+                        <option>Abraham and Isaac (1963)</option>
+                        <option>Variations (Aldous Huxley in Memoriam) (1964)</option>
+                        <option>Introitus (1965)</option>
+                        <option>Requiem Canticles (1966)</option>
+                        <option>The Owl and the Pussy-Cat (1966)</option>
+                        <option value="other">Other (type below)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reviewType">Review Type</label>
+                    <select id="reviewType">
+                        <option value="concert">Concert Review</option>
+                        <option value="recording">Recording Review</option>
+                        <option value="essay">Critical Essay</option>
+                        <option value="obituary">Obituary / Memorial</option>
+                        <option value="book">Book / Monograph</option>
+                        <option value="interview">Interview</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="reviewNotes">Your Research Notes</label>
+                    <textarea id="reviewNotes" rows="2" placeholder="Your own annotations, context, or observations about this source..."></textarea>
+                </div>
+            </form>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="addReview()">➕ Add Review</button>
+                <button class="btn btn-outline" onclick="loadSampleData()">📥 Load Sample Data</button>
+                <button class="btn btn-outline" onclick="clearForm()">🗑️ Clear Form</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Extract Text from PDF or DOCX</h2>
+            <p style="margin-bottom:1rem; color: var(--text-light);">
+                Drop a PDF or Word document containing a review — the text will be extracted and pre-filled in the form above for editing before saving.
+            </p>
+            <div class="drop-zone" id="docDropZone" onclick="document.getElementById('docFile').click()">
+                📄 Click to select a PDF or DOCX file, or drag & drop here
+            </div>
+            <input type="file" id="docFile" accept=".pdf,.docx" style="display:none" onchange="handleDocImport(event)">
+            <div id="docStatus" style="margin-top:0.5rem; font-size:0.9rem; color:var(--text-light);"></div>
+        </div>
+
+        <div class="card">
+            <h2>Bulk Import from CSV</h2>
+            <p style="margin-bottom:1rem; color: var(--text-light);">
+                Upload a CSV file with columns: <code>year, publication, author, work_reviewed, review_type, text, notes</code>
+            </p>
+            <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvFile').click()">
+                📁 Click to select a CSV file or drag & drop here
+            </div>
+            <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="importCSV(event)">
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TAB 2: BROWSE DATA                         -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="tab-browse" class="tab-content">
+        <div class="filter-bar">
+            <div class="form-group">
+                <label>Search</label>
+                <input type="text" id="searchInput" placeholder="Keyword..." oninput="renderTable()">
+            </div>
+            <div class="form-group">
+                <label>Decade</label>
+                <select id="filterDecade" onchange="renderTable()">
+                    <option value="">All</option>
+                    <option>1950</option><option>1960</option><option>1970</option>
+                    <option>1980</option><option>1990</option><option>2000</option>
+                    <option>2010</option><option>2020</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Type</label>
+                <select id="filterType" onchange="renderTable()">
+                    <option value="">All</option>
+                    <option value="concert">Concert</option>
+                    <option value="recording">Recording</option>
+                    <option value="essay">Essay</option>
+                    <option value="obituary">Obituary</option>
+                    <option value="book">Book</option>
+                    <option value="interview">Interview</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-danger" onclick="if(confirm('Delete ALL reviews?')){reviews=[];saveData();renderTable();showToast('All reviews deleted');}">🗑️ Clear All</button>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Reviews Database (<span id="reviewCount">0</span> entries)</h2>
+            <div class="table-wrapper">
+                <table id="reviewsTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Year</th>
+                            <th>Author</th>
+                            <th>Publication</th>
+                            <th>Work</th>
+                            <th>Type</th>
+                            <th>Polarity</th>
+                            <th>Sentiment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reviewsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TAB 3: ANALYSIS                            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="tab-analysis" class="tab-content">
+        <div class="stats-row" id="statsRow"></div>
+        <div class="card">
+            <h2>Sentiment Analysis Results</h2>
+            <p style="margin-bottom:1rem; color: var(--text-light);">
+                Sentiment is computed using a lexicon-based approach with musicological vocabulary clusters.
+            </p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Year</th><th>Author</th><th>Work</th>
+                            <th>Polarity</th><th>Subjectivity</th>
+                            <th>Hostility</th><th>Ambivalence</th>
+                            <th>Reassessment</th><th>Acceptance</th>
+                            <th>Craft Influence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysisBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-success" onclick="exportAnalysisCSV()">📥 Export Analysis as CSV</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TAB 4: VISUALIZE                           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="tab-visualize" class="tab-content">
+        <div class="card">
+            <h2>Sentiment Polarity Over Time</h2>
+            <div class="chart-container">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Vocabulary Cluster Trends by Decade</h2>
+            <div class="chart-container">
+                <canvas id="clusterChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Sentiment by Publication</h2>
+            <div class="chart-container">
+                <canvas id="publicationChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Review Volume by Decade</h2>
+            <div class="chart-container">
+                <canvas id="volumeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TAB 5: REPORT                              -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="tab-report" class="tab-content">
+        <div class="card">
+            <h2>Generated Research Report</h2>
+            <p style="margin-bottom:1rem; color: var(--text-light);">
+                Auto-generated summary suitable for inclusion in a research paper.
+            </p>
+            <div class="btn-group" style="margin-bottom:1rem;">
+                <button class="btn btn-primary" onclick="generateReport()">🔄 Generate Report</button>
+                <button class="btn btn-success" onclick="downloadReport()">📥 Download as TXT</button>
+            </div>
+            <div class="report-output" id="reportOutput">Click "Generate Report" to create a research summary from your data.</div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TAB 6: VOCABULARY                          -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="tab-vocabulary" class="tab-content">
+        <div class="card">
+            <h2>Critical Vocabulary Clusters</h2>
+            <p style="margin-bottom:1rem; color: var(--text-light);">
+                These clusters define the lexicon used for reception analysis. Edit them to match your research framework.
+            </p>
+            <div class="cluster-grid" id="clusterGrid"></div>
+        </div>
+        <div class="card">
+            <h2>Top Words Across All Reviews</h2>
+            <div id="wordFreqList" style="column-count:3; font-size:0.9rem;"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- CITATION MODAL -->
+<div class="modal-overlay" id="citeModal" onclick="if(event.target===this)document.getElementById('citeModal').classList.remove('open')">
+    <div class="modal" style="max-width:600px;">
+        <button class="modal-close" onclick="document.getElementById('citeModal').classList.remove('open')">✕</button>
+        <h2>Citation Generator</h2>
+        <div id="citeContent"></div>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <h2>Edit Review</h2>
+        <input type="hidden" id="editId">
+        <div class="form-grid">
+            <div class="form-group full-width">
+                <label>Review Text *</label>
+                <textarea id="editText" rows="6"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Year *</label>
+                <input type="number" id="editYear" min="1900" max="2030">
+            </div>
+            <div class="form-group">
+                <label>Publication *</label>
+                <input type="text" id="editPublication">
+            </div>
+            <div class="form-group">
+                <label>Author / Critic *</label>
+                <input type="text" id="editAuthor">
+            </div>
+            <div class="form-group">
+                <label>Work Reviewed *</label>
+                <input type="text" id="editWork">
+            </div>
+            <div class="form-group">
+                <label>Review Type</label>
+                <select id="editType">
+                    <option value="concert">Concert Review</option>
+                    <option value="recording">Recording Review</option>
+                    <option value="essay">Critical Essay</option>
+                    <option value="obituary">Obituary / Memorial</option>
+                    <option value="book">Book / Monograph</option>
+                    <option value="interview">Interview</option>
+                </select>
+            </div>
+            <div class="form-group full-width">
+                <label>Research Notes</label>
+                <textarea id="editNotes" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="saveEdit()">💾 Save Changes</button>
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT                                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<script>
+// ── DATA STORE ──
+let reviews = JSON.parse(localStorage.getItem('stravinsky_reviews') || '[]');
+
+// ── CRITICAL VOCABULARY CLUSTERS ──
+const VOCABULARY = {
+    hostility: [
+        "incomprehensible","cold","cerebral","arid","sterile",
+        "academic","dry","mechanical","austere","difficult",
+        "inaccessible","abstruse","remote","forbidding","harsh",
+        "ugly","noise","unpleasant","tedious","boring","lifeless",
+        "empty","pretentious","contrived","pointless"
+    ],
+    ambivalence: [
+        "complex","challenging","demanding","uncompromising",
+        "austere","spare","concentrated","severe","rigorous",
+        "intellectual","abstract","experimental","transitional",
+        "puzzling","curious","interesting","unusual","strange"
+    ],
+    reassessment: [
+        "masterpiece","profound","visionary","innovative",
+        "revolutionary","significant","important","essential",
+        "revelatory","extraordinary","remarkable","compelling",
+        "genius","brilliant","groundbreaking","seminal"
+    ],
+    acceptance: [
+        "beautiful","moving","expressive","lyrical","spiritual",
+        "transcendent","luminous","serene","powerful","affecting",
+        "eloquent","poignant","sublime","radiant","timeless",
+        "magnificent","glorious","stunning","breathtaking"
+    ],
+    craft_influence: [
+        "craft","serial","twelve-tone","row","dodecaphonic",
+        "webern","schoenberg","technique","method","system",
+        "serialist","serialism","tone-row","hexachord","rotation"
+    ]
+};
+
+const STOPWORDS = new Set([
+    "the","a","an","and","or","but","in","on","at","to","for","of","with",
+    "by","from","is","it","its","was","were","be","been","being","have",
+    "has","had","do","does","did","will","would","shall","should","may",
+    "might","can","could","this","that","these","those","i","you","he",
+    "she","we","they","me","him","her","us","them","my","your","his",
+    "our","their","what","which","who","whom","where","when","how","not",
+    "no","nor","as","if","then","than","too","very","just","about","above",
+    "after","again","all","also","am","any","are","because","before",
+    "between","both","each","few","more","most","other","over","own",
+    "same","so","some","such","into","only","out","up","down","here",
+    "there","through","under","until","while","during","s","t","re","ve",
+    "ll","d","m","o","don","didn","doesn","won","isn","aren","wasn",
+    "weren","hasn","haven","hadn","wouldn","shouldn","couldn","mustn"
+]);
+
+// ── SAVE / LOAD ──
+function saveData() {
+    localStorage.setItem('stravinsky_reviews', JSON.stringify(reviews));
+}
+
+// ── SENTIMENT ANALYSIS (Lexicon-based) ──
+// Simple but effective polarity lexicon for musicological texts
+const POSITIVE_WORDS = new Set([
+    "beautiful","moving","expressive","lyrical","spiritual","transcendent",
+    "luminous","serene","powerful","affecting","eloquent","poignant",
+    "sublime","radiant","timeless","masterpiece","profound","visionary",
+    "innovative","revolutionary","significant","important","essential",
+    "revelatory","extraordinary","remarkable","compelling","genius",
+    "brilliant","groundbreaking","seminal","magnificent","glorious",
+    "stunning","breathtaking","excellent","wonderful","superb","fine",
+    "great","impressive","admirable","splendid","noble","rich","vivid",
+    "exciting","fascinating","captivating","enchanting","delightful",
+    "graceful","elegant","refined","sophisticated","accomplished",
+    "triumphant","majestic","inspired","creative","original","fresh",
+    "bold","daring","courageous","masterful","virtuosic","perfect"
+]);
+
+const NEGATIVE_WORDS = new Set([
+    "incomprehensible","cold","cerebral","arid","sterile","academic",
+    "dry","mechanical","difficult","inaccessible","abstruse","remote",
+    "forbidding","harsh","ugly","noise","unpleasant","tedious","boring",
+    "lifeless","empty","pretentious","contrived","pointless","dull",
+    "weak","poor","bad","terrible","awful","disappointing","failed",
+    "failure","mediocre","uninspired","derivative","banal","trite",
+    "clumsy","awkward","crude","vulgar","offensive","painful","grim",
+    "bleak","dreary","monotonous","repetitive","tiresome","labored",
+    "stiff","rigid","flat","thin","shallow","superficial","confused",
+    "chaotic","incoherent","disjointed","fragmented","aimless"
+]);
+
+const NEGATORS = new Set([
+    'not','never','no','hardly','barely','scarcely','without','lacks','lack',
+    'neither','nor','nothing','nowhere','nobody','cannot','cant','doesnt',
+    'didnt','wasnt','isnt','wouldnt','shouldnt','fails','failed','absence'
+]);
+const INTENSIFIERS = new Set([
+    'very','extremely','highly','utterly','truly','deeply','remarkably',
+    'incredibly','absolutely','quite','particularly','especially','profoundly',
+    'singularly','uniquely','strikingly','overwhelmingly','immensely'
+]);
+
+function stem(w) {
+    return w.replace(/(?:ness|tion|ity|ally|ely|ful|less|ing|ed|ly)$/, '');
+}
+
+function analyzeSentiment(text) {
+    const words = text.toLowerCase().replace(/[^a-z\s'-]/g, '').split(/\s+/);
+    let posScore = 0, negScore = 0, totalWords = 0;
+
+    for (let i = 0; i < words.length; i++) {
+        const w = words[i];
+        if (w.length <= 2 || STOPWORDS.has(w)) continue;
+        totalWords++;
+
+        // Negation: look back up to 3 words
+        let negated = false;
+        for (let j = Math.max(0, i - 3); j < i; j++) {
+            if (NEGATORS.has(words[j])) { negated = true; break; }
+        }
+
+        // Intensifier: look back 1 word
+        const boost = (i > 0 && INTENSIFIERS.has(words[i - 1])) ? 1.5 : 1;
+
+        const isPos = POSITIVE_WORDS.has(w) || POSITIVE_WORDS.has(stem(w));
+        const isNeg = NEGATIVE_WORDS.has(w) || NEGATIVE_WORDS.has(stem(w));
+
+        if (isPos) negated ? negScore += boost : posScore += boost;
+        if (isNeg) negated ? posScore += boost : negScore += boost;
+    }
+
+    const polarity = totalWords > 0 ? (posScore - negScore) / Math.max(totalWords, 1) : 0;
+    const subjectivity = totalWords > 0 ? (posScore + negScore) / totalWords : 0;
+
+    return {
+        polarity: Math.max(-1, Math.min(1, polarity)),
+        subjectivity: Math.min(1, subjectivity)
+    };
+}
+
+function scoreVocabulary(text) {
+    const words = text.toLowerCase().replace(/[^a-z\s'-]/g, '').split(/\s+/);
+    const scores = {};
+    for (const [cluster, terms] of Object.entries(VOCABULARY)) {
+        scores[cluster] = words.filter(w => terms.includes(w)).length;
+    }
+    return scores;
+}
+
+function getSentimentLabel(polarity) {
+    if (polarity < -0.15) return { label: 'Hostile', class: 'badge-hostile' };
+    if (polarity < 0.1) return { label: 'Ambivalent', class: 'badge-ambivalent' };
+    if (polarity < 0.35) return { label: 'Receptive', class: 'badge-receptive' };
+    return { label: 'Enthusiastic', class: 'badge-enthusiastic' };
+}
+
+// ── ADD REVIEW ──
+function addReview() {
+    const text = document.getElementById('reviewText').value.trim();
+    const year = parseInt(document.getElementById('reviewYear').value);
+    const pub = document.getElementById('reviewPublication').value.trim();
+    const author = document.getElementById('reviewAuthor').value.trim();
+    const work = document.getElementById('reviewWork').value;
+    const type = document.getElementById('reviewType').value;
+    const notes = document.getElementById('reviewNotes').value.trim();
+
+    if (!text || !year || !pub || !author || !work) {
+        showToast('Please fill in all required fields (*)', 'warning');
+        return;
+    }
+
+    // Duplicate detection
+    const dupe = reviews.find(r =>
+        r.author.toLowerCase() === author.toLowerCase() &&
+        r.work_reviewed === work &&
+        Math.abs(r.year - year) <= 1
+    );
+    if (dupe && !confirm(`Possible duplicate: "${author}" reviewing "${work}" already exists (${dupe.year}, ${dupe.publication}).\n\nAdd anyway?`)) return;
+
+    const sentiment = analyzeSentiment(text);
+    const vocabScores = scoreVocabulary(text);
+
+    const review = {
+        id: Date.now(),
+        text, year,
+        decade: Math.floor(year / 10) * 10,
+        publication: pub,
+        author, work_reviewed: work,
+        review_type: type,
+        notes,
+        word_count: text.split(/\s+/).length,
+        polarity: sentiment.polarity,
+        subjectivity: sentiment.subjectivity,
+        vocab: vocabScores,
+        date_added: new Date().toISOString()
+    };
+
+    reviews.push(review);
+    saveData();
+    clearForm();
+    showToast(`✓ Review added: ${author} (${year}) on "${work}"`);
+}
+
+function clearForm() {
+    document.getElementById('reviewForm').reset();
+}
+
+// ── SAMPLE DATA ──
+function loadSampleData() {
+    if (reviews.length > 0 && !confirm('This will add sample data to your existing reviews. Continue?')) return;
+
+    const samples = [
+        {
+            text: "Stravinsky's Threni is a cold, cerebral exercise in serial technique. The work is arid and inaccessible, showing little of the vitality that characterized his earlier masterpieces. The twelve-tone method seems mechanical and academic in his hands. One leaves the concert hall puzzled and disappointed.",
+            year: 1958, publication: "Musical Times", author: "Anonymous Critic",
+            work_reviewed: "Threni (1958)", review_type: "concert",
+            notes: "Early hostile reception — typical of initial critical response"
+        },
+        {
+            text: "The Movements for piano and orchestra presents a challenging, uncompromising vision. While demanding on the listener, one senses a rigorous intellectual purpose behind the austere serial language. Craft's influence on the compositional method is evident throughout.",
+            year: 1960, publication: "New York Times", author: "Harold Schonberg",
+            work_reviewed: "Movements (1959)", review_type: "concert",
+            notes: "Ambivalent early response — acknowledges craft but questions appeal"
+        },
+        {
+            text: "Agon represents a remarkable synthesis of Stravinsky's neoclassical and serial languages. The work is innovative and significant, demonstrating that the composer's creative powers remain undiminished. A compelling and important contribution to contemporary music that rewards repeated listening.",
+            year: 1963, publication: "Musical Quarterly", author: "Milton Babbitt",
+            work_reviewed: "Agon (1957)", review_type: "essay",
+            notes: "Reassessment from a fellow serialist — important for reception history"
+        },
+        {
+            text: "The Canticum Sacrum reveals Stravinsky grappling with serial technique in a sacred context. The result is severe and concentrated, perhaps too abstract for the liturgical setting of St. Mark's. Yet there are moments of strange beauty amid the rigorous counterpoint.",
+            year: 1956, publication: "The Guardian", author: "Colin Mason",
+            work_reviewed: "Canticum Sacrum (1955)", review_type: "concert",
+            notes: "Mixed reception at premiere — Venice 1956"
+        },
+        {
+            text: "The Requiem Canticles is a profound and visionary work, luminous in its spiritual intensity. The serial technique here achieves something truly extraordinary — a moving and eloquent statement that transcends mere method. A sublime late masterpiece that stands among the greatest works of the twentieth century.",
+            year: 1971, publication: "Tempo", author: "Claudio Spies",
+            work_reviewed: "Requiem Canticles (1966)", review_type: "essay",
+            notes: "Post-death reassessment — hagiographic tendency"
+        },
+        {
+            text: "Revisiting the Canticum Sacrum on this superb new recording, one is struck by its timeless beauty and poignant expressivity. What once seemed forbidding now reveals itself as essential Stravinsky — radiant, powerful, and deeply affecting. A revelatory experience.",
+            year: 1982, publication: "Gramophone", author: "David Cairns",
+            work_reviewed: "Canticum Sacrum (1955)", review_type: "recording",
+            notes: "Full acceptance phase — recording culture aids reassessment"
+        },
+        {
+            text: "Abraham and Isaac is a difficult work that resists easy appreciation. The Hebrew text setting is austere and the serial writing uncompromising. Yet there is a compelling dramatic intensity that holds the attention. Stravinsky's late manner is not easily dismissed.",
+            year: 1965, publication: "The Listener", author: "Peter Heyworth",
+            work_reviewed: "Abraham and Isaac (1963)", review_type: "concert",
+            notes: "Transitional critical response — grudging respect"
+        },
+        {
+            text: "The Variations in memory of Aldous Huxley represent Stravinsky at his most concentrated and brilliant. Every note tells. The orchestration is extraordinary in its precision and imagination. This is music of remarkable originality that demands and rewards the closest attention.",
+            year: 1985, publication: "Musical Times", author: "Stephen Walsh",
+            work_reviewed: "Variations (Aldous Huxley in Memoriam) (1964)", review_type: "essay",
+            notes: "Walsh's scholarly reassessment — important for reception shift"
+        },
+        {
+            text: "In Memoriam Dylan Thomas is a brief but intensely moving work. The serial canons frame the song with austere beauty. Even skeptics of Stravinsky's twelve-tone turn must acknowledge the expressive power achieved here. A small masterpiece.",
+            year: 1975, publication: "High Fidelity", author: "Andrew Porter",
+            work_reviewed: "In Memoriam Dylan Thomas (1954)", review_type: "recording",
+            notes: "Porter's influential advocacy for late Stravinsky"
+        },
+        {
+            text: "The Flood is perhaps the least successful of Stravinsky's serial works. The television format constrains the music, and the dramatic conception feels fragmented and confused. The serial writing lacks the concentration of Movements or Variations. A disappointing misfire.",
+            year: 1962, publication: "Saturday Review", author: "Irving Kolodin",
+            work_reviewed: "The Flood (1962)", review_type: "concert",
+            notes: "Negative reception — TV premiere context important"
+        }
+    ];
+
+    samples.forEach(s => {
+        const sentiment = analyzeSentiment(s.text);
+        const vocabScores = scoreVocabulary(s.text);
+        reviews.push({
+            id: Date.now() + Math.random() * 1000,
+            text: s.text,
+            year: s.year,
+            decade: Math.floor(s.year / 10) * 10,
+            publication: s.publication,
+            author: s.author,
+            work_reviewed: s.work_reviewed,
+            review_type: s.review_type,
+            notes: s.notes,
+            word_count: s.text.split(/\s+/).length,
+            polarity: sentiment.polarity,
+            subjectivity: sentiment.subjectivity,
+            vocab: vocabScores,
+            date_added: new Date().toISOString()
+        });
+    });
+
+    saveData();
+    showToast(`✓ Loaded ${samples.length} sample reviews`);
+    renderTable();
+}
+
+// ── CSV IMPORT ──
+function importCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const lines = e.target.result.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+        let imported = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const values = parseCSVLine(lines[i]);
+            const row = {};
+            headers.forEach((h, idx) => row[h] = (values[idx] || '').trim());
+
+            if (row.text && row.year) {
+                const sentiment = analyzeSentiment(row.text);
+                const vocabScores = scoreVocabulary(row.text);
+                reviews.push({
+                    id: Date.now() + i,
+                    text: row.text,
+                    year: parseInt(row.year),
+                    decade: Math.floor(parseInt(row.year) / 10) * 10,
+                    publication: row.publication || 'Unknown',
+                    author: row.author || 'Unknown',
+                    work_reviewed: row.work_reviewed || 'Unknown',
+                    review_type: row.review_type || 'concert',
+                    notes: row.notes || '',
+                    word_count: row.text.split(/\s+/).length,
+                    polarity: sentiment.polarity,
+                    subjectivity: sentiment.subjectivity,
+                    vocab: vocabScores,
+                    date_added: new Date().toISOString()
+                });
+                imported++;
+            }
+        }
+        saveData();
+        renderTable();
+        showToast(`✓ Imported ${imported} reviews from CSV`);
+    };
+    reader.readAsText(file);
+}
+
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        if (line[i] === '"') { inQuotes = !inQuotes; }
+        else if (line[i] === ',' && !inQuotes) { result.push(current); current = ''; }
+        else { current += line[i]; }
+    }
+    result.push(current);
+    return result;
+}
+
+// ── DRAG & DROP ──
+const dropZone = document.getElementById('dropZone');
+if (dropZone) {
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.csv')) {
+            importCSV({ target: { files: [file] } });
+        } else {
+            showToast('Please drop a CSV file', 'warning');
+        }
+    });
+}
+
+// ── RENDER TABLE ──
+function renderTable() {
+    const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    const decade = document.getElementById('filterDecade')?.value;
+    const type = document.getElementById('filterType')?.value;
+
+    let filtered = reviews.filter(r => {
+        if (search && !r.text.toLowerCase().includes(search) &&
+            !r.author.toLowerCase().includes(search) &&
+            !r.publication.toLowerCase().includes(search) &&
+            !r.work_reviewed.toLowerCase().includes(search) &&
+            !(r.notes || '').toLowerCase().includes(search)) return false;
+        if (decade && r.decade !== parseInt(decade)) return false;
+        if (type && r.review_type !== type) return false;
+        return true;
+    });
+
+    filtered.sort((a, b) => a.year - b.year);
+
+    const tbody = document.getElementById('reviewsBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = filtered.map((r, i) => {
+        const sent = getSentimentLabel(r.polarity);
+        const polClass = r.polarity > 0.05 ? 'polarity-positive' : r.polarity < -0.05 ? 'polarity-negative' : 'polarity-neutral';
+        return `<tr>
+            <td>${i + 1}</td>
+            <td>${r.year}</td>
+            <td>${r.author}</td>
+            <td>${r.publication}</td>
+            <td>${r.work_reviewed}</td>
+            <td>${r.review_type}</td>
+            <td class="${polClass}">${r.polarity.toFixed(3)}</td>
+            <td><span class="badge ${sent.class}">${sent.label}</span></td>
+            <td style="white-space:nowrap;">
+                <button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.8rem;" onclick="openEdit(${r.id})">✏️</button>
+                <button class="btn btn-outline" style="padding:0.3rem 0.6rem;font-size:0.8rem;" onclick="openCite(${r.id})">📖</button>
+                <button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.8rem;" onclick="deleteReview(${r.id})">✕</button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('reviewCount').textContent = filtered.length;
+}
+
+function deleteReview(id) {
+    reviews = reviews.filter(r => r.id !== id);
+    saveData();
+    renderTable();
+    showToast('Review deleted');
+}
+
+// ── EDIT MODAL ──
+function openEdit(id) {
+    const r = reviews.find(r => r.id === id);
+    if (!r) return;
+    document.getElementById('editId').value = id;
+    document.getElementById('editText').value = r.text;
+    document.getElementById('editYear').value = r.year;
+    document.getElementById('editPublication').value = r.publication;
+    document.getElementById('editAuthor').value = r.author;
+    document.getElementById('editWork').value = r.work_reviewed;
+    document.getElementById('editType').value = r.review_type;
+    document.getElementById('editNotes').value = r.notes || '';
+    document.getElementById('editModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('editModal').classList.remove('open');
+}
+
+function saveEdit() {
+    const id = Number(document.getElementById('editId').value);
+    const text = document.getElementById('editText').value.trim();
+    const year = parseInt(document.getElementById('editYear').value);
+    const pub = document.getElementById('editPublication').value.trim();
+    const author = document.getElementById('editAuthor').value.trim();
+    const work = document.getElementById('editWork').value.trim();
+    const type = document.getElementById('editType').value;
+    const notes = document.getElementById('editNotes').value.trim();
+
+    if (!text || !year || !pub || !author || !work) {
+        showToast('Please fill in all required fields (*)', 'warning');
+        return;
+    }
+
+    const sentiment = analyzeSentiment(text);
+    const vocabScores = scoreVocabulary(text);
+
+    const idx = reviews.findIndex(r => r.id === id);
+    if (idx === -1) return;
+    reviews[idx] = {
+        ...reviews[idx],
+        text, year,
+        decade: Math.floor(year / 10) * 10,
+        publication: pub,
+        author,
+        work_reviewed: work,
+        review_type: type,
+        notes,
+        word_count: text.split(/\s+/).length,
+        polarity: sentiment.polarity,
+        subjectivity: sentiment.subjectivity,
+        vocab: vocabScores
+    };
+    saveData();
+    closeModal();
+    renderTable();
+    showToast(`✓ Review updated`);
+}
+
+// ── ANALYSIS TAB ──
+function renderAnalysis() {
+    if (reviews.length === 0) return;
+
+    // Stats
+    const avgPol = reviews.reduce((s, r) => s + r.polarity, 0) / reviews.length;
+    const avgSub = reviews.reduce((s, r) => s + r.subjectivity, 0) / reviews.length;
+    const pubs = new Set(reviews.map(r => r.publication)).size;
+    const works = new Set(reviews.map(r => r.work_reviewed)).size;
+
+    document.getElementById('statsRow').innerHTML = `
+        <div class="stat-card"><div class="stat-value">${reviews.length}</div><div class="stat-label">Total Reviews</div></div>
+        <div class="stat-card"><div class="stat-value">${avgPol.toFixed(3)}</div><div class="stat-label">Mean Polarity</div></div>
+        <div class="stat-card"><div class="stat-value">${avgSub.toFixed(3)}</div><div class="stat-label">Mean Subjectivity</div></div>
+        <div class="stat-card"><div class="stat-value">${pubs}</div><div class="stat-label">Publications</div></div>
+        <div class="stat-card"><div class="stat-value">${works}</div><div class="stat-label">Works Covered</div></div>
+        <div class="stat-card"><div class="stat-value">${reviews[0]?.year || '—'}–${reviews[reviews.length-1]?.year || '—'}</div><div class="stat-label">Date Range</div></div>
+    `;
+
+    // Table
+    const sorted = [...reviews].sort((a, b) => a.year - b.year);
+    document.getElementById('analysisBody').innerHTML = sorted.map(r => {
+        const polClass = r.polarity > 0.05 ? 'polarity-positive' : r.polarity < -0.05 ? 'polarity-negative' : 'polarity-neutral';
+        return `<tr>
+            <td>${r.year}</td><td>${r.author}</td><td>${r.work_reviewed}</td>
+            <td class="${polClass}">${r.polarity.toFixed(3)}</td>
+            <td>${r.subjectivity.toFixed(3)}</td>
+            <td>${r.vocab?.hostility || 0}</td>
+            <td>${r.vocab?.ambivalence || 0}</td>
+            <td>${r.vocab?.reassessment || 0}</td>
+            <td>${r.vocab?.acceptance || 0}</td>
+            <td>${r.vocab?.craft_influence || 0}</td>
+        </tr>`;
+    }).join('');
+}
+
+// ── EXPORT CSV ──
+function exportAnalysisCSV() {
+    if (reviews.length === 0) { showToast('No data to export', 'warning'); return; }
+    const headers = ['year','author','publication','work_reviewed','review_type','polarity','subjectivity','hostility','ambivalence','reassessment','acceptance','craft_influence','word_count','text'];
+    const rows = reviews.map(r => [
+        r.year, `"${r.author}"`, `"${r.publication}"`, `"${r.work_reviewed}"`,
+        r.review_type, r.polarity.toFixed(4), r.subjectivity.toFixed(4),
+        r.vocab?.hostility||0, r.vocab?.ambivalence||0, r.vocab?.reassessment||0,
+        r.vocab?.acceptance||0, r.vocab?.craft_influence||0, r.word_count,
+        `"${r.text.replace(/"/g, '""')}"`
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    downloadFile(csv, 'stravinsky_analysis_results.csv', 'text/csv');
+    showToast('✓ CSV exported');
+}
+
+// ── CHARTS ──
+let charts = {};
+
+function renderCharts() {
+    if (reviews.length === 0) return;
+
+    // Destroy existing charts
+    Object.values(charts).forEach(c => c.destroy());
+    charts = {};
+
+    const sorted = [...reviews].sort((a, b) => a.year - b.year);
+
+    // 1. Timeline
+    const ctx1 = document.getElementById('timelineChart').getContext('2d');
+    charts.timeline = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: sorted.map(r => r.year),
+            datasets: [{
+                label: 'Sentiment Polarity',
+                data: sorted.map(r => r.polarity),
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52,152,219,0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 6,
+                pointHoverRadius: 9,
+                pointBackgroundColor: sorted.map(r =>
+                    r.polarity > 0.1 ? '#27ae60' : r.polarity < -0.1 ? '#e74c3c' : '#f39c12'
+                )
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        afterLabel: (ctx) => {
+                            const r = sorted[ctx.dataIndex];
+                            return `${r.author} — ${r.publication}\n${r.work_reviewed}`;
+                        }
+                    }
+                },
+                legend: { display: true }
+            },
+            scales: {
+                y: {
+                    min: -1, max: 1,
+                    title: { display: true, text: 'Polarity (negative ← → positive)' }
+                },
+                x: { title: { display: true, text: 'Year' } }
+            }
+        }
+    });
+
+    // 2. Vocabulary clusters by decade
+    const decades = [...new Set(reviews.map(r => r.decade))].sort();
+    const clusterNames = ['hostility', 'ambivalence', 'reassessment', 'acceptance'];
+    const clusterColors = ['#e74c3c', '#f39c12', '#27ae60', '#3498db'];
+
+    const clusterData = clusterNames.map((name, i) => ({
+        label: name.charAt(0).toUpperCase() + name.slice(1),
+        data: decades.map(d => {
+            const decReviews = reviews.filter(r => r.decade === d);
+            return decReviews.length > 0
+                ? decReviews.reduce((s, r) => s + (r.vocab?.[name] || 0), 0) / decReviews.length
+                : 0;
+        }),
+        borderColor: clusterColors[i],
+        backgroundColor: clusterColors[i] + '33',
+        fill: false,
+        tension: 0.3,
+        pointRadius: 5
+    }));
+
+    const ctx2 = document.getElementById('clusterChart').getContext('2d');
+    charts.cluster = new Chart(ctx2, {
+        type: 'line',
+        data: { labels: decades.map(d => d + 's'), datasets: clusterData },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { title: { display: true, text: 'Average Vocabulary Score' } },
+                x: { title: { display: true, text: 'Decade' } }
+            }
+        }
+    });
+
+    // 3. Publication comparison
+    const pubs = [...new Set(reviews.map(r => r.publication))];
+    const pubPolarity = pubs.map(p => {
+        const pubReviews = reviews.filter(r => r.publication === p);
+        return pubReviews.reduce((s, r) => s + r.polarity, 0) / pubReviews.length;
+    });
+
+    const ctx3 = document.getElementById('publicationChart').getContext('2d');
+    charts.publication = new Chart(ctx3, {
+        type: 'bar',
+        data: {
+            labels: pubs,
+            datasets: [{
+                label: 'Mean Sentiment Polarity',
+                data: pubPolarity,
+                backgroundColor: pubPolarity.map(p =>
+                    p > 0.1 ? '#27ae60' : p < -0.1 ? '#e74c3c' : '#f39c12'
+                ),
+                borderWidth: 1,
+                borderColor: '#2c3e50'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                x: { min: -1, max: 1, title: { display: true, text: 'Polarity' } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // 4. Volume by decade
+    const decadeCounts = decades.map(d => reviews.filter(r => r.decade === d).length);
+    const ctx4 = document.getElementById('volumeChart').getContext('2d');
+    charts.volume = new Chart(ctx4, {
+        type: 'bar',
+        data: {
+            labels: decades.map(d => d + 's'),
+            datasets: [{
+                label: 'Number of Reviews',
+                data: decadeCounts,
+                backgroundColor: '#3498db',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Count' } }
+            }
+        }
+    });
+}
+
+// ── REPORT ──
+function generateReport() {
+    if (reviews.length === 0) {
+        document.getElementById('reportOutput').textContent = 'No reviews in database. Add reviews first.';
+        return;
+    }
+
+    const sorted = [...reviews].sort((a, b) => a.year - b.year);
+    const avgPol = reviews.reduce((s, r) => s + r.polarity, 0) / reviews.length;
+    const avgSub = reviews.reduce((s, r) => s + r.subjectivity, 0) / reviews.length;
+    const pubs = [...new Set(reviews.map(r => r.publication))];
+    const authors = [...new Set(reviews.map(r => r.author))];
+    const works = [...new Set(reviews.map(r => r.work_reviewed))];
+    const decades = [...new Set(reviews.map(r => r.decade))].sort();
+
+    // Find most positive/negative decades
+    const decadePolarity = {};
+    decades.forEach(d => {
+        const dr = reviews.filter(r => r.decade === d);
+        decadePolarity[d] = dr.reduce((s, r) => s + r.polarity, 0) / dr.length;
+    });
+    const mostPosDec = Object.entries(decadePolarity).sort((a, b) => b[1] - a[1])[0];
+    const mostNegDec = Object.entries(decadePolarity).sort((a, b) => a[1] - b[1])[0];
+
+    let report = `════════════════════════════════════════════════════════════
+STRAVINSKY RECEPTION HISTORY: COMPUTATIONAL ANALYSIS REPORT
+Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+════════════════════════════════════════════════════════════
+
+CORPUS OVERVIEW
+  Total reviews analyzed:      ${reviews.length}
+  Date range:                  ${sorted[0].year} – ${sorted[sorted.length - 1].year}
+  Publications represented:    ${pubs.length}
+  Critics represented:         ${authors.length}
+  Works covered:               ${works.length}
+  Total word count:            ${reviews.reduce((s, r) => s + r.word_count, 0).toLocaleString()}
+
+SENTIMENT ANALYSIS SUMMARY
+  Overall mean polarity:       ${avgPol.toFixed(4)}
+  Overall mean subjectivity:   ${avgSub.toFixed(4)}
+  Most positive decade:        ${mostPosDec[0]}s (polarity: ${mostPosDec[1].toFixed(4)})
+  Most negative decade:        ${mostNegDec[0]}s (polarity: ${mostNegDec[1].toFixed(4)})
+
+DECADE-BY-DECADE BREAKDOWN
+`;
+
+    decades.forEach(d => {
+        const dr = reviews.filter(r => r.decade === d);
+        const pol = dr.reduce((s, r) => s + r.polarity, 0) / dr.length;
+        const sub = dr.reduce((s, r) => s + r.subjectivity, 0) / dr.length;
+        const label = pol < -0.15 ? 'Hostile' : pol < 0.1 ? 'Ambivalent' : pol < 0.35 ? 'Receptive' : 'Enthusiastic';
+        report += `  ${d}s: ${dr.length} reviews | Polarity: ${pol.toFixed(3)} (${label}) | Subjectivity: ${sub.toFixed(3)}\n`;
+    });
+
+    report += `
+VOCABULARY CLUSTER ANALYSIS
+`;
+    const clusters = ['hostility', 'ambivalence', 'reassessment', 'acceptance', 'craft_influence'];
+    clusters.forEach(c => {
+        const mean = reviews.reduce((s, r) => s + (r.vocab?.[c] || 0), 0) / reviews.length;
+        report += `  ${c.padEnd(20)}: mean score ${mean.toFixed(3)}\n`;
+    });
+
+    report += `
+TOP CRITICS BY REVIEW COUNT
+`;
+    const authorCounts = {};
+    reviews.forEach(r => { authorCounts[r.author] = (authorCounts[r.author] || 0) + 1; });
+    Object.entries(authorCounts).sort((a, b) => b[1] - a[1]).slice(0, 8).forEach(([author, count]) => {
+        const meanPol = reviews.filter(r => r.author === author).reduce((s, r) => s + r.polarity, 0) / count;
+        report += `  ${author}: ${count} reviews (mean polarity: ${meanPol.toFixed(3)})\n`;
+    });
+
+    report += `
+WORKS ANALYSIS
+`;
+    works.forEach(w => {
+        const wr = reviews.filter(r => r.work_reviewed === w);
+        const pol = wr.reduce((s, r) => s + r.polarity, 0) / wr.length;
+        report += `  ${w}: ${wr.length} reviews (mean polarity: ${pol.toFixed(3)})\n`;
+    });
+
+    report += `
+════════════════════════════════════════════════════════════
+NOTE: Sentiment analysis uses a lexicon-based approach with
+musicological vocabulary clusters. Results should be
+interpreted as indicative trends, not absolute measures.
+Cross-reference with close reading of source texts.
+════════════════════════════════════════════════════════════`;
+
+    document.getElementById('reportOutput').textContent = report;
+    showToast('✓ Report generated');
+}
+
+function downloadReport() {
+    const text = document.getElementById('reportOutput').textContent;
+    if (!text || text.startsWith('Click')) { showToast('Generate a report first', 'warning'); return; }
+    downloadFile(text, 'stravinsky_reception_report.txt', 'text/plain');
+    showToast('✓ Report downloaded');
+}
+
+// ── VOCABULARY TAB ──
+function saveVocabulary() {
+    document.querySelectorAll('.vocab-edit').forEach(ta => {
+        const cluster = ta.dataset.cluster;
+        VOCABULARY[cluster] = ta.value.split(',').map(w => w.trim().toLowerCase()).filter(Boolean);
+    });
+    // Re-score all reviews with updated vocabulary
+    reviews.forEach(r => { r.vocab = scoreVocabulary(r.text); });
+    saveData();
+    showToast('✓ Vocabulary saved and reviews re-scored');
+}
+
+function renderVocabulary() {
+    const grid = document.getElementById('clusterGrid');
+    grid.innerHTML = Object.entries(VOCABULARY).map(([name, terms]) =>
+        `<div class="cluster-card cluster-${name}">
+            <h4>${name.replace('_', ' ')}</h4>
+            <textarea class="vocab-edit" data-cluster="${name}" rows="4" style="width:100%;font-size:0.82rem;margin-top:0.4rem;">${terms.join(', ')}</textarea>
+        </div>`
+    ).join('');
+
+    // Show save button once
+    if (!document.getElementById('vocabSaveBtn')) {
+        const saveBtn = document.createElement('div');
+        saveBtn.id = 'vocabSaveBtn';
+        saveBtn.className = 'btn-group';
+        saveBtn.style.marginTop = '1rem';
+        saveBtn.innerHTML = '<button class="btn btn-primary" onclick="saveVocabulary()">💾 Save Vocabulary & Re-score</button>';
+        document.getElementById('clusterGrid').parentElement.appendChild(saveBtn);
+    }
+
+    // Word frequency
+    if (reviews.length === 0) {
+        document.getElementById('wordFreqList').innerHTML = '<p style="color:var(--text-light)">Add reviews to see word frequencies.</p>';
+        return;
+    }
+
+    const freq = {};
+    reviews.forEach(r => {
+        r.text.toLowerCase().replace(/[^a-z\s'-]/g, '').split(/\s+/).forEach(w => {
+            if (w.length > 3 && !STOPWORDS.has(w)) {
+                freq[w] = (freq[w] || 0) + 1;
+            }
+        });
+    });
+
+    const topWords = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 60);
+    document.getElementById('wordFreqList').innerHTML = topWords.map(([w, c]) =>
+        `<div><strong>${w}</strong>: ${c}</div>`
+    ).join('');
+}
+
+// ── TAB SWITCHING ──
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+
+    if (name === 'browse') renderTable();
+    if (name === 'analysis') renderAnalysis();
+    if (name === 'visualize') setTimeout(renderCharts, 100);
+    if (name === 'report') { /* user clicks generate */ }
+    if (name === 'vocabulary') renderVocabulary();
+}
+
+// ── TOAST ──
+function showToast(msg, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.background = type === 'warning' ? '#f39c12' : '#27ae60';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ── FILE DOWNLOAD HELPER ──
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// ── CITATION GENERATOR ──
+function formatAuthor(name) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return name;
+    const last = parts[parts.length - 1];
+    const first = parts.slice(0, -1).join(' ');
+    return `${last}, ${first}`;
+}
+
+function buildCitations(r) {
+    const authorFwd = r.author;
+    const authorRev = formatAuthor(r.author);
+    const pub = r.publication;
+    const year = r.year;
+    const work = r.work_reviewed;
+    const typeLabel = { concert: 'Concert review', recording: 'Recording review', essay: 'Essay', obituary: 'Obituary', book: 'Review', interview: 'Interview' }[r.review_type] || 'Review';
+
+    const chicago = `${authorRev}. "${typeLabel} of <em>${work}</em>." <em>${pub}</em> (${year}).`;
+    const mla     = `${authorRev}. "${typeLabel} of <em>${work}</em>." <em>${pub}</em>, ${year}.`;
+    const apa     = `${authorRev} (${year}). [${typeLabel} of ${work}]. <em>${pub}</em>.`;
+    return { chicago, mla, apa };
+}
+
+function openCite(id) {
+    const r = reviews.find(r => r.id === id);
+    if (!r) return;
+    const c = buildCitations(r);
+    document.getElementById('citeContent').innerHTML = `
+        <div class="citation-box">
+            <label>Chicago (Notes-Bibliography)</label>
+            <button class="copy-btn" onclick="copyText(this)">Copy</button>
+            <div id="cite-chicago">${c.chicago}</div>
+        </div>
+        <div class="citation-box">
+            <label>MLA 9th Edition</label>
+            <button class="copy-btn" onclick="copyText(this)">Copy</button>
+            <div id="cite-mla">${c.mla}</div>
+        </div>
+        <div class="citation-box">
+            <label>APA 7th Edition</label>
+            <button class="copy-btn" onclick="copyText(this)">Copy</button>
+            <div id="cite-apa">${c.apa}</div>
+        </div>
+    `;
+    document.getElementById('citeModal').classList.add('open');
+}
+
+function copyText(btn) {
+    const div = btn.nextElementSibling;
+    navigator.clipboard.writeText(div.innerText).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+    });
+}
+
+// ── PDF / DOCX IMPORT ──
+if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+}
+
+async function extractPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let text = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(' ') + '\n';
+    }
+    return text.trim();
+}
+
+async function extractDOCX(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value.trim();
+}
+
+async function handleDocImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const status = document.getElementById('docStatus');
+    status.textContent = 'Extracting text…';
+    try {
+        let text = '';
+        if (file.name.endsWith('.pdf')) {
+            text = await extractPDF(file);
+        } else if (file.name.endsWith('.docx')) {
+            text = await extractDOCX(file);
+        } else {
+            status.textContent = 'Unsupported format.';
+            return;
+        }
+        document.getElementById('reviewText').value = text;
+        status.textContent = `✓ Extracted ${text.split(/\s+/).length} words from "${file.name}". Fill in the other fields above and click Add Review.`;
+        document.getElementById('reviewText').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch(e) {
+        status.textContent = 'Error extracting text: ' + e.message;
+    }
+    event.target.value = '';
+}
+
+// Doc drop zone wiring
+const docDropZone = document.getElementById('docDropZone');
+if (docDropZone) {
+    docDropZone.addEventListener('dragover', e => { e.preventDefault(); docDropZone.classList.add('dragover'); });
+    docDropZone.addEventListener('dragleave', () => docDropZone.classList.remove('dragover'));
+    docDropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        docDropZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) handleDocImport({ target: { files: [file], value: '' } });
+    });
+}
+
+// ── INIT ──
+renderTable();
+</script>
+
+</body>
+</html>
