@@ -1,5 +1,7 @@
 # Stravinsky Reception History Tool
 
+**Live:** https://yuliabrusova85-ship-it.github.io/Stravinsky-tool/
+
 A single-file browser app for computational analysis of critical reception of Igor Stravinsky's serial-period works (1952–1966). Built for musicological research — no server, no install, runs entirely in the browser.
 
 ## What it does
